@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { ExternalLink } from 'lucide-react'
 
 export default function TwitterEmbed() {
   useEffect(() => {
@@ -22,18 +21,6 @@ export default function TwitterEmbed() {
         </p>
         &mdash; dopp (@usedoppai) <a href="https://twitter.com/usedoppai/status/1952330629791596972?ref_src=twsrc%5Etfw">August 4, 2025</a>
       </blockquote>
-      
-      <div className="mt-4">
-        <a 
-          href="https://x.com/usedoppai"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors font-medium"
-        >
-          Read More
-          <ExternalLink size={16} />
-        </a>
-      </div>
     </div>
   )
 } 
