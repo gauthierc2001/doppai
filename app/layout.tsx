@@ -13,9 +13,9 @@ export const metadata: Metadata = {
   publisher: 'DoppAI',
   robots: 'index, follow',
   icons: {
-    icon: '/public/doppaitransp.png',
-    shortcut: '/public/doppaitransp.png',
-    apple: '/public/doppaitransp.png',
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
   },
   openGraph: {
     title: 'Dopp AI',
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     siteName: 'Dopp AI',
     images: [
       {
-        url: '/public/doppaitransp.png',
+        url: '/doppaitransp.png',
         width: 1200,
         height: 630,
         alt: 'Dopp AI Logo',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Dopp AI',
     description: 'A new class of AI agents that embody how we think, express and connect.',
-    images: ['/public/doppaitransp.png'],
+    images: ['/doppaitransp.png'],
   },
   viewport: 'width=device-width, initial-scale=1',
   themeColor: '#f5b0be',
@@ -51,7 +51,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/public/doppaitransp.png" />
+        <link rel="icon" href="/favicon.ico" />
         <script async src="https://platform.twitter.com/widgets.js" charSet="utf-8"></script>
       </head>
       <body className={inter.className}>
