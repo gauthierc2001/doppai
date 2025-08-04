@@ -1,0 +1,33 @@
+{
+  "name": "doppai-landing-page",
+  "version": "1.0.0",
+  "description": "Modern landing page for DoppAI - showcasing AI agents that embody human expression",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python server.py",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [
+    "doppai",
+    "landing-page",
+    "ai",
+    "artificial-intelligence",
+    "responsive",
+    "modern-design"
+  ],
+  "author": "DoppAI Team",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/doppai.git"
+  },
+  "homepage": "https://your-username.github.io/doppai",
+  "bugs": {
+    "url": "https://github.com/your-username/doppai/issues"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "python": ">=3.7.0"
+  }
+} 
