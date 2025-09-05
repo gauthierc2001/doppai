@@ -1,5 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AIProviderManager } from '../../../../lib/providers'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+
+interface AIResponse {
+  content: string
+  provider: 'openai' | 'gemini' | 'local'
+  success: boolean
+}
+
+class AIProviderManager {
+  static async analyzePersonalityWithGemini(tweets: any[]): Promise<AIResponse> {
+    const API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyDBbCqB1Mf3db2n22JGuGX-eUSBn7m78Ks'
+    
+    if (!API_KEY) {
+      return { content: '', provider: 'gemini', success: false }
+    }
+
+    try {
+      const allText = tweets.map(tweet => tweet.text).join('\n\n')
+      const genAI = new GoogleGenerativeAI(API_KEY)
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+      
+      const prompt = `Analyze these tweets and provide a personality profile: ${allText}`
+      const result = await model.generateContent(prompt)
+      const response = await result.response
+      const text = response.text()
+      
+      return {
+        content: text,
+        provider: 'gemini',
+        success: true
+      }
+    } catch (error) {
+      return { content: '', provider: 'gemini', success: false }
+    }
+  }
+}
 
 // Personality profiles for different users
 const personalityProfiles: Record<string, string> = {
