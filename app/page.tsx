@@ -22,10 +22,10 @@ export default function Home() {
   const [showContent, setShowContent] = useState(false)
 
   useEffect(() => {
-    // Show loading screen for 4 seconds
+    // Show loading screen for 1 second
     const timer = setTimeout(() => {
       setShowContent(true)
-    }, 4000)
+    }, 1000)
 
     return () => clearTimeout(timer)
   }, [])

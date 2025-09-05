@@ -1,0 +1,6 @@
+@echo off
+echo Killing existing Node processes...
+taskkill /f /im node.exe 2>nul
+timeout /t 2 /nobreak >nul
+echo Starting DoppAI development server...
+npm run dev

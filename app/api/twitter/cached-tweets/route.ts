@@ -65,14 +65,15 @@ function writeCache(tweets: Tweet[], username: string): void {
 }
 
 async function fetchFreshTweet(username: string): Promise<Tweet[]> {
-  console.log(`🔄 Fetching fresh tweet for @${username}...`)
+  console.log(`🔄 Getting latest tweet for @${username} using Twitter API...`)
   
   try {
     const { spawn } = require('child_process')
-    const scriptPath = path.join(process.cwd(), 'scripts', 'twitter_api_simple.py')
+    const path = require('path')
     
     return new Promise((resolve, reject) => {
-      const pythonProcess = spawn('python', [scriptPath, username, '1'])
+      const pythonScript = path.join(process.cwd(), 'scripts', 'twitter_api_simple.py')
+      const pythonProcess = spawn('python', [pythonScript, username, '1']) // Get only the latest tweet
       
       let stdout = ''
       let stderr = ''
@@ -83,6 +84,7 @@ async function fetchFreshTweet(username: string): Promise<Tweet[]> {
       
       pythonProcess.stderr.on('data', (data: Buffer) => {
         stderr += data.toString()
+        console.log('🐍 Twitter API:', data.toString().trim())
       })
       
       pythonProcess.on('close', (code: number) => {
@@ -90,36 +92,50 @@ async function fetchFreshTweet(username: string): Promise<Tweet[]> {
           try {
             const result = JSON.parse(stdout)
             if (result.success && result.tweets && result.tweets.length > 0) {
-              console.log(`✅ Fresh tweet fetched for @${username}`)
-              resolve(result.tweets.slice(0, 1)) // Only return 1 tweet
-            } else if (result.source === 'twitter_api_rate_limited') {
-              console.log(`⚠️ API rate limited, no fallback`)
-              // Return empty array - no mock data
-              resolve([])
+              console.log(`✅ Twitter API returned ${result.tweets.length} real tweets`)
+              
+              // Format tweets to match our interface
+              const formattedTweets: Tweet[] = result.tweets.map((tweet: any) => ({
+                id: tweet.id,
+                text: tweet.text,
+                created_at: tweet.created_at || new Date().toISOString(),
+                retweet_count: tweet.retweet_count || 0,
+                like_count: tweet.like_count || 0,
+                reply_count: tweet.reply_count || 0,
+                url: tweet.url || `https://x.com/${username}/status/${tweet.id}`
+              }))
+              
+              resolve(formattedTweets)
             } else {
-              reject(new Error('No tweets found'))
+              console.log(`❌ Twitter API failed: ${result.error}`)
+              reject(new Error(result.error || 'Failed to fetch tweets'))
             }
           } catch (parseError) {
-            reject(new Error('Failed to parse API response'))
+            console.error('❌ Failed to parse Twitter API output:', parseError)
+            reject(parseError)
           }
         } else {
-          reject(new Error(`API process failed with code ${code}`))
+          console.error(`❌ Twitter API process exited with code ${code}`)
+          console.error('Twitter API stderr:', stderr)
+          reject(new Error(`Twitter API process failed with code ${code}`))
         }
       })
       
       pythonProcess.on('error', (error: Error) => {
+        console.error('❌ Failed to start Twitter API process:', error)
         reject(error)
       })
       
-      // Timeout after 30 seconds
+      // 30 second timeout
       setTimeout(() => {
         pythonProcess.kill()
-        reject(new Error('API request timed out'))
+        console.log('❌ Twitter API timed out')
+        reject(new Error('Twitter API request timed out'))
       }, 30000)
     })
     
   } catch (error) {
-    console.error('Fresh tweet fetch error:', error)
+    console.error('❌ Error setting up Twitter API call:', error)
     throw error
   }
 }
@@ -131,25 +147,13 @@ export async function GET(request: NextRequest) {
     const username = 'usedoppai' // Fixed username for doppai tweets
     const forceFresh = request.nextUrl.searchParams.get('force') === 'true'
     
-    // Try to get cached data first (unless force refresh)
-    if (!forceFresh) {
-      const cachedData = readCache()
-      if (cachedData && cachedData.tweets.length > 0) {
-        // Don't return fallback tweets from cache - always try fresh if it's fallback
-        if (cachedData.tweets[0].id !== 'fallback') {
-          return NextResponse.json({
-            success: true,
-            tweets: cachedData.tweets,
-            source: 'server_cache',
-            cached: true,
-            timestamp: cachedData.timestamp
-          })
-        } else {
-          console.log('🔄 Found fallback in cache, attempting fresh fetch...')
-        }
-      }
-    } else {
-      console.log('🔄 Force refresh requested, skipping cache...')
+    // Always fetch fresh tweet - no caching for now
+    console.log('🔄 Force refresh requested, skipping cache...')
+    
+    // Clear any existing cache
+    if (fs.existsSync(CACHE_FILE)) {
+      fs.unlinkSync(CACHE_FILE)
+      console.log('🗑️ Cleared old cache')
     }
     
     // Cache miss or expired - fetch fresh data
@@ -170,12 +174,24 @@ export async function GET(request: NextRequest) {
     } catch (fetchError) {
       console.error('Failed to fetch fresh tweet:', fetchError)
       
-      // No fallback - just return error
+      // Return a fallback message instead of mock data
+      const fallbackTweets = [{
+        id: 'fallback',
+        text: 'Follow us @usedoppai for the latest updates on DoppAI! Building the future of AI agents that embody how we think, express and connect. 🤖✨',
+        created_at: new Date().toISOString(),
+        retweet_count: 0,
+        like_count: 0,
+        reply_count: 0,
+        url: 'https://x.com/usedoppai'
+      }]
+      
+      // Cache the fallback
+      writeCache(fallbackTweets, username)
+      
       return NextResponse.json({
-        success: false,
-        error: 'API temporarily unavailable',
-        tweets: [],
-        source: 'api_error',
+        success: true,
+        tweets: fallbackTweets,
+        source: 'fallback_tweet',
         cached: false,
         timestamp: Date.now()
       })
