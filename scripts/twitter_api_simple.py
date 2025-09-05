@@ -34,10 +34,13 @@ def get_user_tweets(username, bearer_token, max_tweets):
         response = requests.get(url, headers=headers, timeout=10)
         print(f"Bearer token response: {response.status_code}", file=sys.stderr)
         
+        # Record this API call
+        record_request()
+        
         if response.status_code == 429:
             print("⏰ Rate limited! Twitter API allows 300 requests per 15 minutes.", file=sys.stderr)
-            print("⏰ Waiting 60 seconds before retry...", file=sys.stderr)
-            time.sleep(60)
+            print("⏰ Waiting 15 minutes (900 seconds) before retry...", file=sys.stderr)
+            time.sleep(900)
             
             # Retry once after waiting
             response = requests.get(url, headers=headers, timeout=10)
@@ -60,9 +63,12 @@ def get_user_tweets(username, bearer_token, max_tweets):
                 time.sleep(1)
                 tweets_response = requests.get(tweets_url, headers=headers, params=params, timeout=10)
                 
+                # Record this API call too
+                record_request()
+                
                 if tweets_response.status_code == 429:
-                    print("⏰ Rate limited on tweets endpoint! Waiting 60 seconds...", file=sys.stderr)
-                    time.sleep(60)
+                    print("⏰ Rate limited on tweets endpoint! Waiting 15 minutes (900 seconds)...", file=sys.stderr)
+                    time.sleep(900)
                     tweets_response = requests.get(tweets_url, headers=headers, params=params, timeout=10)
                 
                 if tweets_response.status_code == 200:
@@ -113,10 +119,7 @@ def scrape_user_tweets(username, max_tweets=15):
         
         print(f"🔍 Scraping {max_tweets} REAL tweets from @{username} using Twitter API...", file=sys.stderr)
         
-        # Record that we're making a request
-        record_request()
-        
-        # Get tweets using Bearer Token
+        # Get tweets using Bearer Token (rate limiting is handled inside)
         tweets = get_user_tweets(username, bearer_token, max_tweets)
         if tweets:
             return format_success(tweets, username, "bearer_token")
