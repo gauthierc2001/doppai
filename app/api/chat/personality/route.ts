@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AIProviderManager } from '../../../lib/ai-providers'
-import { CryptoAPIManager } from '../../../lib/crypto-apis'
+import { AIProviderManager } from '../../../../lib/ai-providers'
+import { CryptoAPIManager } from '../../../../lib/crypto-apis'
 
 // Personality-specific response patterns
 const personalityResponses: Record<string, string[]> = {
