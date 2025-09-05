@@ -39,7 +39,11 @@ export const metadata: Metadata = {
     description: 'A new class of AI agents that embody how we think, express and connect.',
     images: ['/doppaitransp.png'],
   },
-  viewport: 'width=device-width, initial-scale=1',
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
   themeColor: '#f5b0be',
 }
 

@@ -11,26 +11,109 @@ class AIProviderManager {
   static async analyzePersonalityWithGemini(tweets: any[]): Promise<AIResponse> {
     const API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyDBbCqB1Mf3db2n22JGuGX-eUSBn7m78Ks'
     
+    console.log('🔑 Gemini API Key status:', API_KEY ? 'Found' : 'Missing')
+    console.log('🔑 API Key preview:', API_KEY ? API_KEY.substring(0, 10) + '...' : 'No key')
+    
     if (!API_KEY) {
+      console.error('❌ No Gemini API key found in environment')
       return { content: '', provider: 'gemini', success: false }
     }
 
     try {
+      console.log('🤖 Starting Gemini personality analysis...')
+      
       const allText = tweets.map(tweet => tweet.text).join('\n\n')
+      
+      const prompt = `You are an EXPERT personality analyst studying ORIGINAL tweets (no retweets) to create a PERFECT personality clone. Your goal: deep analysis for creative but authentic replication.
+
+ORIGINAL TWEETS TO ANALYZE:
+${allText}
+
+DEEP ANALYSIS FRAMEWORK:
+
+1. LINGUISTIC DNA:
+- Word choice patterns: formal/casual/technical/slang ratio
+- Sentence complexity: fragments vs full sentences vs compound thoughts
+- Rhythm: short bursts, long flows, or mixed patterns
+- Repeated phrases or verbal tics (exactly as written)
+- Unique expressions that only this person uses
+- Grammar style: perfect/casual/intentionally broken
+
+2. EMOTIONAL SIGNATURE:
+- Energy baseline: high/medium/low energy default
+- Emotional range: reserved to expressive scale
+- Excitement indicators: what makes them animated
+- Frustration patterns: how they express disagreement
+- Joy expressions: how they show happiness
+- Confidence markers: humble to assertive spectrum
+
+3. THOUGHT ARCHITECTURE:
+- How they structure ideas (linear/scattered/circular)
+- Question vs statement preference
+- Use of examples, analogies, or metaphors
+- Abstract vs concrete thinking patterns
+- Problem-solving approach: analytical/intuitive/practical
+- Teaching style: explain/assume/challenge audience
+
+4. SOCIAL INTERACTION BLUEPRINT:
+- Audience awareness: talking TO followers vs AT the void
+- Engagement style: conversational/broadcast/educational
+- Humor deployment: timing, type, frequency
+- Vulnerability level: oversharing to private spectrum
+- Authority tone: expert/peer/student positioning
+
+5. CONTENT PSYCHOLOGY:
+- What topics spark their passion (language intensity analysis)
+- Values revealed through word choices
+- Future vs present vs past temporal focus
+- Individual vs collective perspective ("I" vs "we")
+- Optimism/realism/pessimism in different contexts
+
+6. TECHNICAL WRITING MARKERS:
+- Punctuation personality (!!!, ???, ..., etc.)
+- Capitalization strategy (emphasis patterns)
+- Emoji integration style and specific favorites
+- Hashtag usage philosophy
+- Link sharing approach
+
+7. CREATIVE POTENTIAL MAPPING:
+- Topics they haven't covered but would likely discuss
+- How they'd approach unfamiliar subjects
+- Their knowledge transfer patterns
+- Logical extensions of their interests
+- Personality consistency across different moods
+
+REPLICATION RULEBOOK:
+Create 20+ SPECIFIC behavioral rules for perfect mimicry:
+- Vocabulary rules ("always says X instead of Y")
+- Punctuation rules ("never ends with periods")
+- Emotional rules ("uses 🔥 when excited about tech")
+- Structure rules ("starts controversial takes with 'unpopular opinion:'")
+- Creativity rules ("makes analogies to [their field]")
+
+CRITICAL: This person should be replicable across ANY topic while maintaining 100% authenticity to their voice. Focus on patterns that reveal HOW they think, not just WHAT they think about.`
+
+      console.log('📝 Sending prompt to Gemini (length:', prompt.length, 'chars)')
+      
       const genAI = new GoogleGenerativeAI(API_KEY)
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
       
-      const prompt = `Analyze these tweets and provide a personality profile: ${allText}`
+      console.log('🔄 Calling Gemini API...')
       const result = await model.generateContent(prompt)
       const response = await result.response
       const text = response.text()
+      
+      console.log('✅ Gemini analysis successful! Response length:', text.length, 'chars')
+      console.log('📄 First 100 chars:', text.substring(0, 100) + '...')
       
       return {
         content: text,
         provider: 'gemini',
         success: true
       }
+      
     } catch (error) {
+      console.error('❌ Gemini API error:', error)
       return { content: '', provider: 'gemini', success: false }
     }
   }

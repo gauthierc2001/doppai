@@ -11,25 +11,84 @@ class AIProviderManager {
   static async generateChatWithGemini(message: string, personality: string, history: any[], originalTweets: any[], cryptoContext: string = ''): Promise<AIResponse> {
     const API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyDBbCqB1Mf3db2n22JGuGX-eUSBn7m78Ks'
     
+    console.log('🔑 Chat API Key status:', API_KEY ? 'Found' : 'Missing')
+    
     if (!API_KEY) {
+      console.error('❌ No Gemini API key for chat')
       return { content: '', provider: 'gemini', success: false }
     }
 
     try {
+      console.log('💬 Generating Gemini personality-based chat response...')
+      
+      const conversationContext = history.slice(-3).map(msg => 
+        `${msg.type === 'user' ? 'Human' : 'You'}: ${msg.content}`
+      ).join('\n')
+      
+      const tweetSamples = originalTweets.slice(0, 5).map(tweet => `"${tweet.text}"`).join('\n')
+      
+      const prompt = `CRITICAL: You ARE this person. Think with their brain, speak with their voice, respond with their personality.
+
+PERSONALITY DNA:
+${personality}
+
+THEIR ACTUAL WRITING SAMPLES:
+${tweetSamples}${cryptoContext}
+
+CONVERSATION HISTORY:
+${conversationContext}
+
+CURRENT QUESTION: "${message}"
+
+RESPONSE PROTOCOL:
+1. INTERNALIZE their personality completely - you ARE them now
+2. THINK how they would think about this topic
+3. USE their exact vocabulary fingerprint
+4. MATCH their emotional energy and tone
+5. MIRROR their sentence structure and rhythm
+6. DEPLOY their specific punctuation style
+7. INTEGRATE their emoji patterns naturally
+8. MAINTAIN their confidence/humility level
+9. REFLECT their unique worldview and values
+10. BE CREATIVE while staying 100% authentic to their voice
+
+CREATIVITY GUIDELINES:
+- You can discuss topics they've never tweeted about
+- Apply THEIR thinking patterns to new subjects
+- Use THEIR problem-solving approach
+- Maintain THEIR emotional signatures
+- Reference THEIR interests naturally
+- Keep THEIR personality consistent across all topics
+
+AUTHENTICITY CHECK:
+- Would someone who knows this person say "yep, that's exactly how they'd respond"?
+- Does this capture their unique way of seeing/expressing things?
+- Are you using their specific vocabulary and speech patterns?
+- Is the energy level and tone perfectly matched?
+
+Respond as this person (keep it natural length for their style - don't artificially limit). Be creative but stay completely true to their authentic voice:`
+
+      console.log('📝 Sending chat prompt to Gemini (length:', prompt.length, 'chars)')
+      
       const genAI = new GoogleGenerativeAI(API_KEY)
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
       
-      const prompt = `You are this personality: ${personality}. Respond to: ${message}`
+      console.log('🔄 Calling Gemini chat API...')
       const result = await model.generateContent(prompt)
       const response = await result.response
       const text = response.text()
+      
+      console.log('✅ Gemini chat response successful! Length:', text.length, 'chars')
+      console.log('💬 Response preview:', text.substring(0, 50) + '...')
       
       return {
         content: text,
         provider: 'gemini',
         success: true
       }
+      
     } catch (error) {
+      console.error('❌ Gemini chat error:', error)
       return { content: '', provider: 'gemini', success: false }
     }
   }
@@ -50,11 +109,62 @@ class CryptoAPIManager {
   }
   
   static async getCryptoData(symbol: string): Promise<any> {
-    return null // Simplified for build
+    try {
+      console.log(`🪙 Fetching ${symbol} data from CoinGecko...`)
+      
+      const cleanSymbol = symbol.replace('$', '').toLowerCase()
+      
+      const coinsListResponse = await fetch('https://api.coingecko.com/api/v3/coins/list')
+      const coinsList = await coinsListResponse.json()
+      
+      const coin = coinsList.find((c: any) => 
+        c.symbol.toLowerCase() === cleanSymbol || 
+        c.id.toLowerCase() === cleanSymbol
+      )
+      
+      if (!coin) {
+        console.log(`❌ ${symbol} not found in CoinGecko`)
+        return null
+      }
+      
+      const priceResponse = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${coin.id}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`
+      )
+      const priceData = await priceResponse.json()
+      
+      const data = priceData[coin.id]
+      if (!data) return null
+      
+      console.log(`✅ CoinGecko data for ${symbol}:`, data)
+      
+      return {
+        symbol: symbol.toUpperCase(),
+        name: coin.name,
+        price: data.usd,
+        change24h: data.usd_24h_change || 0,
+        marketCap: data.usd_market_cap,
+        volume24h: data.usd_24h_vol,
+        source: 'CoinGecko',
+        lastUpdated: new Date().toISOString()
+      }
+      
+    } catch (error) {
+      console.error('❌ CoinGecko API error:', error)
+      return null
+    }
   }
   
-  static formatCryptoContext(data: any[]): string {
-    return '' // Simplified for build
+  static formatCryptoContext(cryptoData: any[]): string {
+    if (!cryptoData || cryptoData.length === 0) return ''
+    
+    const cryptoInfo = cryptoData.map(coin => {
+      const changeEmoji = coin.change24h > 0 ? '📈' : coin.change24h < 0 ? '📉' : '➡️'
+      const changeText = coin.change24h > 0 ? `+${coin.change24h.toFixed(2)}%` : `${coin.change24h.toFixed(2)}%`
+      
+      return `${coin.symbol}: $${coin.price.toFixed(coin.price < 1 ? 6 : 2)} ${changeEmoji} ${changeText} (24h)`
+    }).join('\n')
+    
+    return `\n\nCURRENT CRYPTO PRICES:\n${cryptoInfo}\n`
   }
 }
 

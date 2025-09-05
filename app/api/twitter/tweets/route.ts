@@ -9,19 +9,103 @@ interface ScrapedTweet {
 
 class TwitterScraper {
   async scrapeTweets(username: string, maxTweets: number = 15): Promise<ScrapedTweet[]> {
-    // Simplified mock implementation for build
-    return [
-      {
-        id: '1',
-        text: `Mock tweet from @${username} for personality analysis`,
-        created_at: new Date().toISOString(),
-        date: new Date().toISOString()
+    console.log(`🔍 Scraping REAL tweets for @${username} (${maxTweets} tweets)`)
+    
+    try {
+      const cleanUsername = username.replace('@', '').toLowerCase()
+      
+      const tweets = await this.scrapeWithSnscrape(cleanUsername, maxTweets)
+      
+      if (tweets.length > 0) {
+        console.log(`✅ Successfully scraped ${tweets.length} REAL tweets`)
+        
+        console.log(`📋 All ${tweets.length} scraped tweets:`)
+        tweets.forEach((tweet, index) => {
+          console.log(`${index + 1}. "${tweet.text}"`)
+        })
+        
+        return tweets
       }
-    ]
+      
+      console.log(`❌ Real tweet scraping failed for @${cleanUsername}`)
+      return []
+      
+    } catch (error) {
+      console.error('❌ Scraping error:', error)
+      return []
+    }
+  }
+
+  private async scrapeWithSnscrape(username: string, maxTweets: number): Promise<ScrapedTweet[]> {
+    console.log(`🐍 Running snscrape for @${username}`)
+    
+    try {
+      const { spawn } = require('child_process')
+      const path = require('path')
+      
+      return new Promise((resolve, reject) => {
+        const pythonScript = path.join(process.cwd(), 'scripts', 'twitter_api_simple.py')
+        const pythonProcess = spawn('python', [pythonScript, username, maxTweets.toString()])
+        
+        let stdout = ''
+        let stderr = ''
+        
+        pythonProcess.stdout.on('data', (data: Buffer) => {
+          stdout += data.toString()
+        })
+        
+        pythonProcess.stderr.on('data', (data: Buffer) => {
+          stderr += data.toString()
+          console.log('🐍 Twitter API:', data.toString().trim())
+        })
+        
+        pythonProcess.on('close', (code: number) => {
+          if (code === 0) {
+            try {
+              const result = JSON.parse(stdout)
+              if (result.success && result.tweets) {
+                console.log(`✅ Twitter API returned ${result.tweets.length} real tweets`)
+                resolve(result.tweets)
+              } else {
+                console.log(`❌ Twitter API failed: ${result.error}`)
+                
+                if (result.source === 'twitter_api_rate_limited') {
+                  console.log(`⏰ Rate limited - Twitter API allows 300 requests per 15 minutes`)
+                  console.log(`⏰ Please wait 15 minutes before trying again`)
+                }
+                resolve([])
+              }
+            } catch (parseError) {
+              console.error('❌ Failed to parse snscrape output:', parseError)
+              resolve([])
+            }
+          } else {
+            console.error(`❌ Twitter API process exited with code ${code}`)
+            console.error('Twitter API stderr:', stderr)
+            resolve([])
+          }
+        })
+        
+        pythonProcess.on('error', (error: Error) => {
+          console.error('❌ Failed to start Twitter API process:', error)
+          resolve([])
+        })
+        
+        setTimeout(() => {
+          pythonProcess.kill()
+          console.log('❌ Twitter API timed out')
+          resolve([])
+        }, 30000)
+      })
+      
+    } catch (error) {
+      console.error('❌ Scraping setup error:', error)
+      return []
+    }
   }
   
   async closeBrowser(): Promise<void> {
-    // Mock implementation
+    // No browser to close for API-based scraping
   }
 }
 
