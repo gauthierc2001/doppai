@@ -39,7 +39,14 @@ class CryptoAPIManager {
   static detectCryptoSymbols(text: string): string[] {
     const cryptoPattern = /\$([A-Z]{2,10})\b|\b(bitcoin|btc|ethereum|eth|dogecoin|doge)\b/gi
     const matches = text.match(cryptoPattern) || []
-    return [...new Set(matches.map(match => match.replace('$', '').toUpperCase()))]
+    const cleaned = matches.map(match => match.replace('$', '').toUpperCase())
+    const unique: string[] = []
+    for (let i = 0; i < cleaned.length; i++) {
+      if (unique.indexOf(cleaned[i]) === -1) {
+        unique.push(cleaned[i])
+      }
+    }
+    return unique
   }
   
   static async getCryptoData(symbol: string): Promise<any> {
