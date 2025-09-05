@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Twitter, Mail } from 'lucide-react'
+import { Mail, Sparkles } from 'lucide-react'
 import MediumFeed from '@/components/MediumFeed'
 import TwitterEmbed from '@/components/TwitterEmbed'
 import Logo from '@/components/Logo'
+import Link from 'next/link'
 
 interface MediumArticle {
   title: string
@@ -202,6 +203,34 @@ export default function Home() {
       </motion.div>
 
       <div className="max-w-4xl mx-auto px-4 py-8 pt-20">
+        {/* Personality dApp Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="glass-card p-8 mb-8"
+        >
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-8 h-8">
+                <Logo />
+              </div>
+              <h2 className="text-2xl font-semibold text-gray-800">Try Our Personality dApp</h2>
+            </div>
+            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+              Enter any X username and chat with an AI that replicates their personality, 
+              communication style, and interests based on all their tweets.
+            </p>
+            <Link 
+              href="/personality"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#f5b0be] to-[#8eb5da] text-white rounded-lg hover:from-[#f395a8] hover:to-[#7aa5d1] transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              <Sparkles size={20} />
+              Launch Personality dApp
+            </Link>
+          </div>
+        </motion.div>
+
         {/* X Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -210,7 +239,7 @@ export default function Home() {
           className="glass-card p-8 mb-8"
         >
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold text-gray-800">Latest Tweets</h2>
+            <h2 className="text-2xl font-semibold text-gray-800">Latest Posts</h2>
             <a 
               href="https://x.com/usedoppai" 
               target="_blank" 

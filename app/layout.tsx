@@ -52,7 +52,6 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" />
-        <script async src="https://platform.twitter.com/widgets.js" charSet="utf-8"></script>
       </head>
       <body className={inter.className}>
         {children}
