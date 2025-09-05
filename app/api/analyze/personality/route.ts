@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AIProviderManager } from '../../../../lib/ai-providers.js'
+import { AIProviderManager } from '../../../../lib/providers'
 
 // Personality profiles for different users
 const personalityProfiles: Record<string, string> = {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { TwitterScraper } from '../../../../lib/twitter-scraper.js'
+import { TwitterScraper } from '../../../../lib/providers'
 
 export async function POST(request: NextRequest) {
   try {
