@@ -124,11 +124,12 @@ async function fetchFreshTweet(username: string): Promise<Tweet[]> {
   }
 }
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const username = 'usedoppai' // Fixed username for doppai tweets
-    const url = new URL(request.url)
-    const forceFresh = url.searchParams.get('force') === 'true'
+    const forceFresh = request.nextUrl.searchParams.get('force') === 'true'
     
     // Try to get cached data first (unless force refresh)
     if (!forceFresh) {
