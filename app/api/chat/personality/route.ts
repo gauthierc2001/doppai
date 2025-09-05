@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AIProviderManager } from '@/lib/ai-providers'
+import { AIProviderManager } from '@/lib/ai-providers-fixed'
 import { CryptoAPIManager } from '@/lib/crypto-apis'
 
 // Personality-specific response patterns
