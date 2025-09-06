@@ -26,74 +26,53 @@ class AIProviderManager {
       
       const allText = tweets.map(tweet => tweet.text).join('\n\n')
       
-      const prompt = `You are an EXPERT personality analyst studying ORIGINAL tweets (no retweets) to create a PERFECT personality clone. Your goal: deep analysis for creative but authentic replication.
+      const prompt = `You're studying these REAL tweets to understand someone's authentic voice and personality. Create a personality profile that captures their unique way of thinking and expressing themselves.
 
-ORIGINAL TWEETS TO ANALYZE:
+TWEETS TO ANALYZE:
 ${allText}
 
-DEEP ANALYSIS FRAMEWORK:
+Your task: Create a personality DNA that allows perfect replication of their voice across ANY topic.
 
-1. LINGUISTIC DNA:
-- Word choice patterns: formal/casual/technical/slang ratio
-- Sentence complexity: fragments vs full sentences vs compound thoughts
-- Rhythm: short bursts, long flows, or mixed patterns
-- Repeated phrases or verbal tics (exactly as written)
-- Unique expressions that only this person uses
-- Grammar style: perfect/casual/intentionally broken
+VOICE SIGNATURE ANALYSIS:
 
-2. EMOTIONAL SIGNATURE:
-- Energy baseline: high/medium/low energy default
-- Emotional range: reserved to expressive scale
-- Excitement indicators: what makes them animated
-- Frustration patterns: how they express disagreement
-- Joy expressions: how they show happiness
-- Confidence markers: humble to assertive spectrum
+1. NATURAL SPEECH PATTERNS:
+- How do they actually talk? (casual/formal/mix)
+- What words or phrases do they repeat?
+- Do they use short punchy sentences or longer flowing thoughts?
+- How do they express excitement, doubt, or confidence?
+- Any unique verbal tics or signature expressions?
 
-3. THOUGHT ARCHITECTURE:
-- How they structure ideas (linear/scattered/circular)
-- Question vs statement preference
-- Use of examples, analogies, or metaphors
-- Abstract vs concrete thinking patterns
-- Problem-solving approach: analytical/intuitive/practical
-- Teaching style: explain/assume/challenge audience
+2. EMOTIONAL FINGERPRINT:
+- What's their default energy level?
+- How do they show enthusiasm vs concern?
+- Do they get passionate about certain topics?
+- Are they optimistic, realistic, or skeptical by nature?
+- How vulnerable or guarded are they?
 
-4. SOCIAL INTERACTION BLUEPRINT:
-- Audience awareness: talking TO followers vs AT the void
-- Engagement style: conversational/broadcast/educational
-- Humor deployment: timing, type, frequency
-- Vulnerability level: oversharing to private spectrum
-- Authority tone: expert/peer/student positioning
+3. THINKING STYLE:
+- Do they ask questions or make statements?
+- Are they concrete/practical or abstract/philosophical?
+- How do they explain things to others?
+- Do they use examples, analogies, or direct explanations?
+- Are they decisive or exploratory in their opinions?
 
-5. CONTENT PSYCHOLOGY:
-- What topics spark their passion (language intensity analysis)
-- Values revealed through word choices
-- Future vs present vs past temporal focus
-- Individual vs collective perspective ("I" vs "we")
-- Optimism/realism/pessimism in different contexts
+4. SOCIAL PERSONALITY:
+- Are they talking TO people or broadcasting?
+- Do they use humor? What kind?
+- How much do they share about themselves?
+- Are they supportive, challenging, or neutral with others?
+- Do they position themselves as expert/peer/student?
 
-6. TECHNICAL WRITING MARKERS:
-- Punctuation personality (!!!, ???, ..., etc.)
-- Capitalization strategy (emphasis patterns)
-- Emoji integration style and specific favorites
-- Hashtag usage philosophy
-- Link sharing approach
+5. CREATIVE VOICE PATTERNS:
+- What makes them get excited in their writing?
+- How would they approach topics they haven't discussed?
+- What values consistently show through their words?
+- How do they balance confidence with humility?
+- What's their natural curiosity level?
 
-7. CREATIVE POTENTIAL MAPPING:
-- Topics they haven't covered but would likely discuss
-- How they'd approach unfamiliar subjects
-- Their knowledge transfer patterns
-- Logical extensions of their interests
-- Personality consistency across different moods
+Now write a conversational personality guide that captures their AUTHENTIC voice - not academic analysis, but practical insights that help replicate how they naturally express themselves. Focus on what makes them uniquely THEM.
 
-REPLICATION RULEBOOK:
-Create 20+ SPECIFIC behavioral rules for perfect mimicry:
-- Vocabulary rules ("always says X instead of Y")
-- Punctuation rules ("never ends with periods")
-- Emotional rules ("uses 🔥 when excited about tech")
-- Structure rules ("starts controversial takes with 'unpopular opinion:'")
-- Creativity rules ("makes analogies to [their field]")
-
-CRITICAL: This person should be replicable across ANY topic while maintaining 100% authenticity to their voice. Focus on patterns that reveal HOW they think, not just WHAT they think about.`
+Make it feel like insider knowledge about how this person's mind works and communicates, not a formal psychological profile.`
 
       console.log('📝 Sending prompt to Gemini (length:', prompt.length, 'chars)')
       

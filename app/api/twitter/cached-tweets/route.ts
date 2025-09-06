@@ -68,74 +68,74 @@ async function fetchFreshTweet(username: string): Promise<Tweet[]> {
   console.log(`🔄 Getting latest tweet for @${username} using Twitter API...`)
   
   try {
-    const { spawn } = require('child_process')
-    const path = require('path')
+    // Get Bearer Token from environment or fallback
+    const bearerToken = process.env.TWITTER_BEARER_TOKEN || "AAAAAAAAAAAAAAAAAAAAALNJfwEAAAAAm0aIfmDpV63anDHo%2FiJT%2FBnx0zs%3DApg1YFbpGF3ZiTnKVcNcaBx5M8KYDvdcXvNDHmRYKD5xgHkIRz"
     
-    return new Promise((resolve, reject) => {
-      const pythonScript = path.join(process.cwd(), 'scripts', 'twitter_api_simple.py')
-      const pythonProcess = spawn('python', [pythonScript, username, '1']) // Get only the latest tweet
-      
-      let stdout = ''
-      let stderr = ''
-      
-      pythonProcess.stdout.on('data', (data: Buffer) => {
-        stdout += data.toString()
-      })
-      
-      pythonProcess.stderr.on('data', (data: Buffer) => {
-        stderr += data.toString()
-        console.log('🐍 Twitter API:', data.toString().trim())
-      })
-      
-      pythonProcess.on('close', (code: number) => {
-        if (code === 0) {
-          try {
-            const result = JSON.parse(stdout)
-            if (result.success && result.tweets && result.tweets.length > 0) {
-              console.log(`✅ Twitter API returned ${result.tweets.length} real tweets`)
-              
-              // Format tweets to match our interface
-              const formattedTweets: Tweet[] = result.tweets.map((tweet: any) => ({
-                id: tweet.id,
-                text: tweet.text,
-                created_at: tweet.created_at || new Date().toISOString(),
-                retweet_count: tweet.retweet_count || 0,
-                like_count: tweet.like_count || 0,
-                reply_count: tweet.reply_count || 0,
-                url: tweet.url || `https://x.com/${username}/status/${tweet.id}`
-              }))
-              
-              resolve(formattedTweets)
-            } else {
-              console.log(`❌ Twitter API failed: ${result.error}`)
-              reject(new Error(result.error || 'Failed to fetch tweets'))
-            }
-          } catch (parseError) {
-            console.error('❌ Failed to parse Twitter API output:', parseError)
-            reject(parseError)
-          }
-        } else {
-          console.error(`❌ Twitter API process exited with code ${code}`)
-          console.error('Twitter API stderr:', stderr)
-          reject(new Error(`Twitter API process failed with code ${code}`))
-        }
-      })
-      
-      pythonProcess.on('error', (error: Error) => {
-        console.error('❌ Failed to start Twitter API process:', error)
-        reject(error)
-      })
-      
-      // 30 second timeout
-      setTimeout(() => {
-        pythonProcess.kill()
-        console.log('❌ Twitter API timed out')
-        reject(new Error('Twitter API request timed out'))
-      }, 30000)
+    // Step 1: Get user ID from username
+    const userResponse = await fetch(`https://api.twitter.com/2/users/by/username/${username}`, {
+      headers: {
+        "Authorization": `Bearer ${bearerToken}`
+      }
     })
     
+    console.log(`Bearer token response: ${userResponse.status}`)
+    
+    if (userResponse.status === 429) {
+      throw new Error("Rate limited. Please wait 15 minutes before trying again.")
+    }
+    
+    if (!userResponse.ok) {
+      throw new Error(`User lookup failed: ${userResponse.status}`)
+    }
+    
+    const userData = await userResponse.json()
+    if (!userData.data || !userData.data.id) {
+      throw new Error(`User @${username} not found`)
+    }
+    
+    const userId = userData.data.id
+    console.log(`✅ Found user @${username} (ID: ${userId})`)
+    
+    // Small delay between API calls
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // Step 2: Get latest tweet
+    const tweetsResponse = await fetch(`https://api.twitter.com/2/users/${userId}/tweets?max_results=1&tweet.fields=created_at,public_metrics`, {
+      headers: {
+        "Authorization": `Bearer ${bearerToken}`
+      }
+    })
+    
+    if (tweetsResponse.status === 429) {
+      throw new Error("Rate limited on tweets endpoint. Please wait 15 minutes before trying again.")
+    }
+    
+    if (!tweetsResponse.ok) {
+      throw new Error(`Tweets fetch failed: ${tweetsResponse.status}`)
+    }
+    
+    const tweetsData = await tweetsResponse.json()
+    if (!tweetsData.data || tweetsData.data.length === 0) {
+      console.log(`❌ No tweets found for @${username}`)
+      return []
+    }
+    
+    // Format tweets to match our interface
+    const formattedTweets: Tweet[] = tweetsData.data.map((tweet: any) => ({
+      id: tweet.id,
+      text: tweet.text,
+      created_at: tweet.created_at || new Date().toISOString(),
+      retweet_count: tweet.public_metrics?.retweet_count || 0,
+      like_count: tweet.public_metrics?.like_count || 0,
+      reply_count: tweet.public_metrics?.reply_count || 0,
+      url: `https://x.com/${username}/status/${tweet.id}`
+    }))
+    
+    console.log(`✅ Twitter API returned ${formattedTweets.length} real tweets`)
+    return formattedTweets
+    
   } catch (error) {
-    console.error('❌ Error setting up Twitter API call:', error)
+    console.error('❌ Twitter API error:', error)
     throw error
   }
 }

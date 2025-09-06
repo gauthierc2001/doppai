@@ -16,7 +16,7 @@ class TwitterScraper {
     try {
       const cleanUsername = username.replace('@', '').toLowerCase()
       
-      const tweets = await this.scrapeWithSnscrape(cleanUsername, maxTweets)
+      const tweets = await this.scrapeWithTwitterAPI(cleanUsername, maxTweets)
       
       if (tweets.length > 0) {
         console.log(`✅ Successfully scraped ${tweets.length} REAL tweets`)
@@ -38,70 +38,77 @@ class TwitterScraper {
     }
   }
 
-  private async scrapeWithSnscrape(username: string, maxTweets: number): Promise<ScrapedTweet[]> {
-    console.log(`🐍 Running snscrape for @${username}`)
+  private async scrapeWithTwitterAPI(username: string, maxTweets: number): Promise<ScrapedTweet[]> {
+    console.log(`🔗 Using Twitter API v2 for @${username}`)
     
     try {
-      const { spawn } = require('child_process')
-      const path = require('path')
+      // Get Bearer Token from environment or fallback
+      const bearerToken = process.env.TWITTER_BEARER_TOKEN || "AAAAAAAAAAAAAAAAAAAAALNJfwEAAAAAm0aIfmDpV63anDHo%2FiJT%2FBnx0zs%3DApg1YFbpGF3ZiTnKVcNcaBx5M8KYDvdcXvNDHmRYKD5xgHkIRz"
       
-      return new Promise((resolve, reject) => {
-        const pythonScript = path.join(process.cwd(), 'scripts', 'twitter_api_simple.py')
-        const pythonProcess = spawn('python', [pythonScript, username, maxTweets.toString()])
-        
-        let stdout = ''
-        let stderr = ''
-        
-        pythonProcess.stdout.on('data', (data: Buffer) => {
-          stdout += data.toString()
-        })
-        
-        pythonProcess.stderr.on('data', (data: Buffer) => {
-          stderr += data.toString()
-          console.log('🐍 Twitter API:', data.toString().trim())
-        })
-        
-        pythonProcess.on('close', (code: number) => {
-          if (code === 0) {
-            try {
-              const result = JSON.parse(stdout)
-              if (result.success && result.tweets) {
-                console.log(`✅ Twitter API returned ${result.tweets.length} real tweets`)
-                resolve(result.tweets)
-              } else {
-                console.log(`❌ Twitter API failed: ${result.error}`)
-                
-                if (result.source === 'twitter_api_rate_limited') {
-                  console.log(`⏰ Rate limited - Twitter API allows 300 requests per 15 minutes`)
-                  console.log(`⏰ Please wait 15 minutes before trying again`)
-                }
-                resolve([])
-              }
-            } catch (parseError) {
-              console.error('❌ Failed to parse snscrape output:', parseError)
-              resolve([])
-            }
-          } else {
-            console.error(`❌ Twitter API process exited with code ${code}`)
-            console.error('Twitter API stderr:', stderr)
-            resolve([])
-          }
-        })
-        
-        pythonProcess.on('error', (error: Error) => {
-          console.error('❌ Failed to start Twitter API process:', error)
-          resolve([])
-        })
-        
-        setTimeout(() => {
-          pythonProcess.kill()
-          console.log('❌ Twitter API timed out')
-          resolve([])
-        }, 30000)
+      // Step 1: Get user ID from username
+      const userResponse = await fetch(`https://api.twitter.com/2/users/by/username/${username}`, {
+        headers: {
+          "Authorization": `Bearer ${bearerToken}`
+        }
       })
       
+      console.log(`Bearer token response: ${userResponse.status}`)
+      
+      if (userResponse.status === 429) {
+        console.log("⏰ Rate limited! Twitter API allows 300 requests per 15 minutes.")
+        throw new Error("Rate limited. Please wait 15 minutes before trying again.")
+      }
+      
+      if (!userResponse.ok) {
+        throw new Error(`User lookup failed: ${userResponse.status}`)
+      }
+      
+      const userData = await userResponse.json()
+      if (!userData.data || !userData.data.id) {
+        throw new Error(`User @${username} not found`)
+      }
+      
+      const userId = userData.data.id
+      console.log(`✅ Found user @${username} (ID: ${userId})`)
+      
+      // Small delay between API calls
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Step 2: Get tweets
+      const tweetsResponse = await fetch(`https://api.twitter.com/2/users/${userId}/tweets?max_results=${Math.min(maxTweets, 100)}&tweet.fields=created_at,public_metrics`, {
+        headers: {
+          "Authorization": `Bearer ${bearerToken}`
+        }
+      })
+      
+      if (tweetsResponse.status === 429) {
+        console.log("⏰ Rate limited on tweets endpoint! Waiting 15 minutes...")
+        throw new Error("Rate limited on tweets endpoint. Please wait 15 minutes before trying again.")
+      }
+      
+      if (!tweetsResponse.ok) {
+        throw new Error(`Tweets fetch failed: ${tweetsResponse.status}`)
+      }
+      
+      const tweetsData = await tweetsResponse.json()
+      if (!tweetsData.data || tweetsData.data.length === 0) {
+        console.log(`❌ No tweets found for @${username}`)
+        return []
+      }
+      
+      // Format tweets
+      const tweets: ScrapedTweet[] = tweetsData.data.map((tweet: any) => ({
+        id: tweet.id,
+        text: tweet.text,
+        created_at: tweet.created_at || new Date().toISOString(),
+        date: new Date().toISOString()
+      }))
+      
+      console.log(`✅ Twitter API returned ${tweets.length} real tweets`)
+      return tweets
+      
     } catch (error) {
-      console.error('❌ Scraping setup error:', error)
+      console.error('❌ Twitter API error:', error)
       return []
     }
   }
